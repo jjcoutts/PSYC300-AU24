@@ -1,0 +1,78 @@
+---
+title: "Pearson's r Correlation Template"
+author: Jacob Coutts
+format: docx
+editor: visual
+---
+
+-   This is the template you will use to run a Pearson's r correlation analysis.
+-   In this template, the predictor variable is labeled 'predictor' and the outcome variable is labeled 'outcome'.
+-   You will be using the template to run a correlation analysis with your data.
+
+## Step 1: Load required packages.
+
+**You do not need to change anything in the chunk of code below. Simply run the code to load the libraries.**
+
+```{r}
+library(psych)
+library(ggplot2)
+library(dplyr)
+```
+
+## Step 2: Reading in your data.
+
+**Remember to change this to the path/name for YOUR data!**
+
+```{r}
+DF <- read.table("correlation_file_name.csv", header= TRUE, sep=",")
+```
+
+## Step 3: Exploring your data.
+
+**View summary statistics of your dataset.**
+
+```{r}
+psych::describeBy(DF)
+```
+
+## Step 4: Examine statistical assumptions (diagnostics).
+
+We will make a quick scatter plot to assess homoscedasticity and linearity. Look for funnel shapes and curves. Remember: Below, change predictorname and outcomename to the name of the variables in YOUR dataset. If you don't use them exactly, you will generate an error (because R will be looking for objects that don't exist).
+
+```{r}
+ggplot(DF, aes(x=predictorname, y=outcomename)) + 
+  geom_point() + 
+  geom_jitter() + 
+  ggtitle("title") + 
+  labs(y="outcome name", x = "predictor name")
+```
+
+## Step 5: Run the analysis and make an inference.
+
+**Remember, DF must be the name of your dataset in R and predictor/outcomename must be the names of those variables.**
+
+```{r}
+cor.test(DF$predictorname,DF$outcomename) 
+```
+
+## Step 6: Visualize the results.
+
+**Remember to change the following information IN THE CODE CHUNK BELOW.** These are the descriptions for what you will need to fill in where there is green text (character strings) in the code block below.
+
+1.  Your graph title in the ggtitle("") command: This can be anything you want within reason. Make sure it stays within the ("").
+2.  Your y-axis title in the labs(y = "") command): This can be anything you want. For example, if your variable name is TimeSleep you can name the axis "Time Spent Sleeping". Make sure it stays within the ("").
+3.  Your x-axis title in the labs(x = "") command): This can be anything you want. For example, if your variable name is ExamScore you can name the axis "Score on Exam". Make sure it stays within the ("").
+
+```{r}
+ggplot(DF, aes(x=predictorname, y=outcomename)) + 
+  geom_point() + 
+  geom_jitter() + 
+  ggtitle("title") + 
+  labs(y="outcome", x = "predictor")
+```
+
+## Step 7: Render the file.
+
+You will see a blue arrow with the word 'Render' next to it at the top of the screen. Click this icon.
+
+### End of script

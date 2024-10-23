@@ -1,0 +1,188 @@
+---
+title: "ANCOVA Analysis Template"
+author: Jacob Coutts
+format: docx
+editor: visual
+---
+
+Please use this template if...
+
+-   Your manipulation is dichotomous/categorical (which applies to EVERYONE IN LAB).
+
+-   Your participant variable is continuous/numeric (e.g., Age).
+
+-   Your outcome is continuous/numeric (e.g., total scale score, which applies to EVERYONE IN LAB).
+
+You may need to refer back to your correlation document or total scoring document to remember how you constructed the total outcome variable (i.e., the lab variable EVERYONE shares).
+
+-   Anywhere you see group written, it corresponds to which group the participant was in (i.e., experiment or control). It is the same as anywhere in the document it says IV/predictor variable. If you did not name this "group", then write the name of your IV/predictor EXACTLY (to the letter/capitalization) as it appears in your .csv file.
+-   Anywhere you see participant variable written you will write the name of your participant variable EXACTLY as it appears in your .csv file.
+-   Anywhere you see outcome (or any variation like outcome_name) written you will write the name of your outcome variable EXACTLY as it appears in your csv file.
+-   Here, the control group was coded as 1 and the experimental group was coded as 2. If you did not do this while cleaning, then you must replace it where appropriate in this file.
+
+## Step 1: Load required packages.
+
+Remember, if you have an error when trying to run any of the packages, try running the line of code install.packages(""), and put the name of the package with the error in the quotation marks.
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(car)
+library(effectsize)
+library(rstatix)
+```
+
+## Step 2: Read in data.
+
+Change this to the path name for YOUR data! If you upload it to the same folder in RStudio, then you just need the file name. You can rename your file the same as below for convenience.
+
+```{r}
+ancova.dat <- read.table("ExperimentalData_Cleaned.csv", header = TRUE, sep=",")
+```
+
+## Step 3: Convert "predictor" to a factor.
+
+If you did not name your experimental condition column "group"...change this to match what is in your Excel file. Do the same for the participant variable.
+
+```{r}
+ancova.dat$group <- as.factor(ancova.dat$group)
+levels(ancova.dat$group)
+```
+
+## Step 4: Create composite variable for outcome
+
+You've already done this...you can copy and paste the code from the correlation file. Just make sure your variable names for the questions are the same or you change this yourself. This is example code if the OUTCOME_VARIABLE were satisfaction with life and composed of five Likert-type items named swl_1 to ... swl_5. Do NOT change your variable names to match this unless your LAB OUTCOME is satisfaction with life. Make it match what is in your Excel file.
+
+```{r}
+ancova.dat$swl_TOT <- ancova.dat$swl_1 + ancova.dat$swl_2 + ancova.dat$swl_3 + ancova.dat$swl_4 + ancova.dat$swl_5
+### AGAIN...replace the above with whatever YOUR lab OUTCOME_VARIABLE is and what the questions are.
+```
+
+## Step 5: Summarize data, including calculating the mean/standard deviation for the outcome and manipulation check for your conditions.
+
+```{r}
+summary(ancova.dat)
+
+mean(ancova.dat$MANIPULATION_CHECK[ancova.dat$group=="1"]) # mean of manipulation check for control group
+sd(ancova.dat$MANIPULATION_CHECK[ancova.dat$group=="1"]) # sd of manipulation check for control group
+mean(ancova.dat$MANIPULATION_CHECK[ancova.dat$group=="2"]) # mean of manipulation check for experimental group
+sd(ancova.dat$MANIPULATION_CHECK[ancova.dat$group=="2"]) # sd of manipulation check for experimental group
+
+mean(ancova.dat$outcome_name[ancova.dat$group=="1"]) # mean of outcome for control group
+sd(ancova.dat$outcome_name[ancova.dat$group=="1"]) # sd of outcome for control group
+mean(ancova.dat$outcome_name[ancova.dat$group=="2"]) # mean of outcome for experimental group
+sd(ancova.dat$outcome_name[ancova.dat$group=="2"]) # sd of outcome for experimental group
+
+mean(ancova.dat$PARTICIPANT_VARIABLE[ancova.dat$group=="1"]) # mean of participant variable for control group
+sd(ancova.dat$PARTICIPANT_VARIABLE[ancova.dat$group=="1"]) # sd of participant variable for control group
+mean(ancova.dat$PARTICIPANT_VARIABLE[ancova.dat$group=="2"]) # mean of participant variable for experimental group
+sd(ancova.dat$PARTICIPANT_VARIABLE[ancova.dat$group=="2"]) # sd of participant variable for experimental group
+```
+
+## Step 6: Testing ANCOVA model assumptions.
+
+We want to check if each level of our predictor is balanced (i.e., of a similar size) and if our data meet the assumptions for an ANCOVA model. If your groups are imbalanced or if one or more of the other assumptions is/are violated, you will still run the model but discuss it in the limitations section of the discussion and state what you could do better in the future (i.e., future directions). **There are ways we can remedy assumption violations, but they are beyond the scope of this class.**
+
+**Assumption #1:** Residuals are independent. This is beyond the scope of PSYC300, but we assume our observations are independent so it will work for this class.
+
+**Assumption #2:** The residuals should be approximately normally distributed. The histogram should look normal (i.e., bell-curve shape) and the Q-Q plot should approximately follow a straight line. If these are "close enough," you can say the assumption of normality seems reasonable when writing up the results. The qq model code follows this format: model name \<- aov(lm(OUTCOME_VARIABLE \~ group, data = ancova.dat))
+
+```{r}
+qq.mod <- aov(lm(OUTCOME_VARIABLE~group+PARTICIPANT_VARIABLE, data=ancova.dat))
+hist(resid(qq.mod)) # should look like a bell curve
+plot(qq.mod,2) # should approximately follow a straight line
+```
+
+**Assumption #3:** No extreme outliers. Look for values much higher or lower than the others. This code follows this format: boxplot(OUTCOME_VARIABLE \~ group, data = ancova.dat)
+
+```{r}
+boxplot(OUTCOME_VARIABLE~group, data=ancova.dat)
+```
+
+**Assumption #4:** Homogeneity of variance across all groups. This assumption is NOT! violated if p \> .05. This code follows this format: leveneTest(OUTCOME_VARIABLE \~ group, data = ancova.dat)
+
+```{r}
+car::leveneTest(OUTCOME_VARIABLE~group, data=ancova.dat)
+# This assumption is NOT! violated IF... p > 0.05!!!
+```
+
+**Assumption #5:** Linearity between the covariate and the OUTCOME_VARIABLE. You will write this line of code for EACH level of your manipulation (i.e., group). The plot should appear to follow a straight line.
+
+```{r}
+# This code follows this format: plot(ancova.dat$covariate name[ancova.dat$group=="1"], ancova.dat$OUTCOME_VARIABLE[ancova.dat$group=="1"]) and you replace "1" with the pertinent level of the IV/predictor. (Should be 1 and 2 unless you named it something other than template/video/instructions.)
+plot(ancova.dat$PARTICIPANT_VARIABLE[ancova.dat$group=="1"], ancova.dat$OUTCOME_VARIABLE[ancova.dat$group=="1"])
+plot(ancova.dat$PARTICIPANT_VARIABLE[ancova.dat$group=="2"], ancova.dat$OUTCOME_VARIABLE[ancova.dat$group=="2"])
+```
+
+**Assumption #6:** Balanced design. There should be an equal number of people in each condition.
+
+```{r}
+# Repeat this code for each level of BOTH your first AND second independent/predictor variables.
+length(ancova.dat$group[ancova.dat$group==1])
+length(ancova.dat$group[ancova.dat$group==2])
+```
+
+## Step 7: Manipulation check.
+
+**Did your manipulation actually work?** \* This code follows this format: t.test(manipulation check \~ group, data = dataset name, var.equal=TRUE)
+
+```{r}
+t.test(MANIPULATION_CHECK~group,data=ancova.dat, var.equal=TRUE)
+# This should tell you if your manipulation worked! 
+# Report the results - see below
+```
+
+*Reporting the results of the manipulation check.*
+
+-   An independent samples t-test showed that there was/was not a significant difference (*t*(*df*)= ##, *p* = ##) between the \_\_\_\_\_\_\_\_\_\_\_\_ group (*M* = ##, SD = ##) compared to the \_\_\_\_\_\_\_\_\_\_\_\_ group (*M* = ##, SD = ##).
+
+**Example:** An independent-samples *t*-test showed that there was not a significant difference (*t* = 2.36, *p* = .041) between the those who were primed for feelings for neuroticism (*M* = 12.01, SD = 3.49) compared to those who were primed for feelings of calm/neutrality (*M* = 9.46, SD = 3.20).
+
+## Step 8: Fitting the ANCOVA model to the data.
+
+*You must check to see whether your interaction is significant by checking whether the THRID ROW with the two variables joined by a ":" has a significant p-value (i.e., \< .05). If it does, then your interaction is significant and you use interactionModel throughout. If not, you will only refer to the output for maineffectModel throughout.* The model code follows this format: model name \<- aov(lm(OUTCOME_VARIABLE \~ group \* PARTICIPANT_VARIABLE, data = ancova.dat)). (+ or \* depending on the interaction)
+
+```{r}
+interactionModel <- aov(lm(OUTCOME_VARIABLE~group*PARTICIPANT_VARIABLE, data=ancova.dat))
+summary(interactionModel)
+# Look for Df, F (value) statistic, and P-value (Pr) for group:PARTICIPANT_VARIABLE
+
+# run this is interaction is not significant
+maineffectModel <- aov(lm(OUTCOME_VARIABLE~group+PARTICIPANT_VARIABLE, data=ancova.dat))
+summary(maineffectModel)
+```
+
+## Step 9: Computing effect size(s).
+
+**Only calculate effect sizes for your manipulation variable, group, (not the covariate) and only if it's significant.** This code follows this format: omega_squared(the name of the model you made in the running the test step)
+
+```{r}
+# only do this if your interaction IS sigificant
+effectsize::omega_squared(interactionModel)
+# only do this if the interaction is not statistically significant
+effectsize::omega_squared(maineffectModel)
+# In your APA report, ONLY report effect sizes for significant results
+# When using Omega Squared, .01 = small, .06 = medium, .14 = large 
+```
+
+## Step 10: Conducting post-hoc analyses.
+
+Recall we only have two levels for our predictor variable, so we do not need to conduct post-hoc analyses. We already know if the groups are significantly different from each other because an ANCOVA/ANOVA with two groups is equivalent to a *t*-test.
+
+However, you could use the code below for more complex designs: The emmeans_test code follows this format: emmeans_test(ancova.dat, OUTCOME_VARIABLE \~ group, covariate = covariate variable)
+
+```{r}
+rstatix::emmeans_test(ancova.dat,OUTCOME_VARIABLE ~ group, covariate = PARTICIPANT_VARIABLE)
+```
+
+## Step 11: Depicting results visually.
+
+You will create a graph regardless of whether your interaction was significant or not. Make sure to change the main title, *x*-axis label, and *y*-axis label. If you are feeling adventurous, you can also play with other color palettes.
+
+```{r}
+p <- ggplot(ancova.dat, (aes(x=PARTICIPANT_VARIABLE, y=OUTCOME_VARIABLE, color=group))) + theme_classic() + ylab("RENAME THIS YOUR OUTCOME_VARIABLE NAME") + xlab("RENAME THIS YOUR PARTICIPANT VARIABLE NAME") + ggtitle("RENAME THIS 'Series Scatterplot between INSERT PARTICIPANT VARIABLE NAME by INSERT OUTCOME_VARIABLE NAME'") + geom_point() + geom_smooth(method="lm", se = FALSE)
+p
+```
+
+## Step 12: Render the document.
+
+### End of script

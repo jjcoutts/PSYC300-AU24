@@ -1,0 +1,203 @@
+---
+title: "Two-Way ANOVA Template"
+author: Jacob Coutts
+format: docx
+editor: visual
+---
+
+Please use this template if...
+
+-   Your manipulation is dichotomous/categorical (which applies to EVERYONE IN LAB).
+
+-   Your participant variable is CATEGORICAL (e.g., personality type, gender).
+
+-   Your OUTCOME_VARIABLE is continuous/numeric (e.g., total scale score, which applies to EVERYONE IN LAB).
+
+You may need to refer back to your correlation document to remember how you constructed the total group OUTCOME_VARIABLE (i.e., the lab variable EVERYONE shares).
+
+-   Anywhere you see group written, it corresponds to which group the participant was in (i.e., experiment or control). It is the same as anywhere in the document it says IV/predictor variable. If you did not name this "group", then write the name of your IV/predictor EXACTLY (to the letter/capitalization) as it appears in your .csv file.
+-   Anywhere you see participant variable written you will write the name of your participant variable EXACTLY as it appears in your .csv file.
+-   Anywhere you see OUTCOME_VARIABLE (or any variation like OUTCOME_VARIABLE) written you will write the name of your OUTCOME_VARIABLE EXACTLY as it appears in your csv file.
+
+## Step 1: Load required packages.
+
+Remember, if you have an error when trying to run any of the packages, try running the line of code install.packages(""), and put the name of the package with the error in the quotation marks.
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(car)
+library(effectsize)
+```
+
+## Step 2: Read in data.
+
+Remember to change this to the path name for YOUR data! If you upload it to the same folder in RStudio, then you just need the file name. You can rename your file the same as below for convenience.
+
+```{r}
+anova.dat <- read.table("ExperimentalData_Cleaned.csv", header = TRUE, sep=",")
+```
+
+## Step 3: Convert "predictor" to a factor.
+
+If you did not name your experimental condition column "group"...change this to match what is in your Excel file. Do the same for the participant variable.
+
+```{r}
+# predictor 
+anova.dat$group <- as.factor(anova.dat$group)
+levels(anova.dat$group)
+
+# participant variable 
+anova.dat$PARTICIPANT_VARIABLE <- as.factor(anova.dat$PARTICIPANT_VARIABLE) 
+levels(anova.dat$PARTICIPANT_VARIABLE)
+```
+
+## Step 4: Create composite variable for OUTCOME_VARIABLE.
+
+You've already done this...you can copy and paste the code from the correlation file. Just make sure your variable names for the questions are the same or you change this yourself. This is example code if the OUTCOME_VARIABLE were satisfaction with life and composed of five Likert-type items named swl_1 to ... swl_5. Do NOT change your variable names to match this unless your LAB OUTCOME_VARIABLE is satisfaction with life. Make it match what is in your excel file.
+
+```{r}
+anova.dat$swl_TOT <- anova.dat$swl_1 + anova.dat$swl_2 + anova.dat$swl_3 + anova.dat$swl_4 + anova.dat$swl_5
+### AGAIN...replace the above with whatever YOUR lab OUTCOME_VARIABLE is and what the questions are.
+```
+
+## Step 5: Summarize data, including calculating the mean/standard deviation for the outcome and manipulation check for your conditions.
+
+```{r}
+summary(anova.dat)
+
+mean(anova.dat$MANIPULATION_CHECK[anova.dat$group=="1"]) # mean of manipulation check for control group
+sd(anova.dat$MANIPULATION_CHECK[anova.dat$group=="1"]) # sd of manipulation check for control group
+mean(anova.dat$MANIPULATION_CHECK[anova.dat$group=="2"]) # mean of manipulation check for experimental group
+sd(anova.dat$MANIPULATION_CHECK[anova.dat$group=="2"]) # sd of manipulation check for experimental group
+
+mean(anova.dat$OUTCOME_VARIABLE[anova.dat$group=="1"]) # mean of outcome for control group
+sd(anova.dat$OUTCOME_VARIABLE[anova.dat$group=="1"]) # sd of outcome for control group
+mean(anova.dat$OUTCOME_VARIABLE[anova.dat$group=="2"]) # mean of outcome for experimental group
+sd(anova.dat$OUTCOME_VARIABLE[anova.dat$group=="2"]) # sd of outcome for experimental group
+
+mean(anova.dat$OUTCOME_VARIABLE[anova.dat$PARTICIPANT_VARIABLE=="1"]) # mean of outcome for level 1 of participant variable
+sd(anova.dat$OUTCOME_VARIABLE[anova.dat$PARTICIPANT_VARIABLE=="1"]) # sd of outcome for level 1 of participant variable
+mean(anova.dat$OUTCOME_VARIABLE[anova.dat$PARTICIPANT_VARIABLE=="2"]) # mean of outcome for level 2 of participant variable
+sd(anova.dat$OUTCOME_VARIABLE[anova.dat$PARTICIPANT_VARIABLE=="2"]) # sd of outcome for level 2 of participant variable
+# uncomment if you have 3 or 4 levels
+#mean(anova.dat$OUTCOME_VARIABLE[anova.dat$PARTICIPANT_VARIABLE=="3"]) # mean of outcome for level 3 of participant variable
+#sd(anova.dat$OUTCOME_VARIABLE[anova.dat$PARTICIPANT_VARIABLE=="3"]) # sd of outcome for level 3 of participant variable
+#mean(anova.dat$OUTCOME_VARIABLE[anova.dat$PARTICIPANT_VARIABLE=="4"]) # mean of outcome for level 4 of participant variable
+#sd(anova.dat$OUTCOME_VARIABLE[anova.dat$PARTICIPANT_VARIABLE=="4"]) # sd of outcome for level 4 of participant variable
+```
+
+## Step 6: Testing ANOVA model assumptions.
+
+We want to check if each level of our predictors are balanced (i.e., of a similar size) and if our data meet the assumptions for an ANOVA model. If your groups are imbalanced or if one or more of the other assumptions is/are violated, you will still run the model but discuss it in the limitations section of the discussion and state what you could do better in the future (i.e., future directions). **There are ways we can remedy assumption violations, but they are beyond the scope of this class.**
+
+**Assumption #1:** Residuals are independent. \* This is beyond the scope of PSYC300, but we assume our observations are independent so it will work for this class.
+
+**Assumption #2:** The residuals should be approximately normally distributed. The histogram should look normal (i.e., bell-curve shape) and the Q-Q plot should approximately follow a straight line. If these are "close enough," you can say the assumption of normality seems reasonable when writing up the results. The qq model code follows this format: model name \<- aov(lm(OUTCOME_VARIABLE \~ group, data = anova.dat))
+
+```{r}
+qq.mod <- aov(lm(OUTCOME_VARIABLE~group*PARTICIPANT_VARIABLE, data=anova.dat)) # you can change this to * if the interaction IS significant down below
+hist(resid(qq.mod)) # should look like a bell curve
+plot(qq.mod,2) # should approximately follow a straight line
+```
+
+**Assumption #3:** No extreme outliers. This code follows this format: boxplot(OUTCOME_VARIABLE \~ group, data = anova.dat)
+
+```{r}
+boxplot(OUTCOME_VARIABLE~group, data=anova.dat)
+```
+
+**Assumption #4:** Homogeneity of variance across all groups. This assumption is NOT! violated if p \> .05. This code follows this format: leveneTest(OUTCOME_VARIABLE \~ grouping variable, data = anova.dat)
+
+```{r}
+car::leveneTest(OUTCOME_VARIABLE~group, data=anova.dat)
+car::leveneTest(OUTCOME_VARIABLE~PARTICIPANT_VARIABLE, data=anova.dat)
+# This assumption is NOT!!!! violated IF... p > 0.05!!!
+```
+
+**Assumption #5:** Balanced design. There should be an equal number of people in each condition.
+
+```{r}
+# Repeat this code for each level of BOTH your first AND second groups.
+# control and experimental groups
+length(anova.dat$group[anova.dat$group==1])
+length(anova.dat$group[anova.dat$group==2])
+
+# each level of the participant variable
+length(anova.dat$PARTICIPANT_VARIABLE[anova.dat$PARTICIPANT_VARIABLE==1])
+length(anova.dat$PARTICIPANT_VARIABLE[anova.dat$PARTICIPANT_VARIABLE==2])
+# IF YOU HAVE MORE THAN TWO LEVELS, UNCOMMENT (DELETE THE HASHTAGE - # - AND RUN CODE BELOW
+# length(anova.dat$PARTICIPANT_VARIABLE[anova.dat$PARTICIPANT_VARIABLE==3])
+# length(anova.dat$PARTICIPANT_VARIABLE[anova.dat$PARTICIPANT_VARIABLE==4])
+```
+
+## Step 7: Manipulation check.
+
+This code follows this format: t.test(manipulation check \~ group, data = anova.dat, var.equal=TRUE)
+
+```{r}
+t.test(anova.dat$m_check~anova.dat$group, var.equal=TRUE)
+# This should tell you if your manipulation worked! 
+# Report the results - see below
+```
+
+*Reporting the results of the manipulation check.*
+
+-   An independent-samples *t*-test showed that there was/was not a significant difference (*t*(*df*)= ##, *p* = ##) between the \_\_\_\_\_\_\_\_\_\_\_\_ group (*M* = ##, SD = ##) compared to the \_\_\_\_\_\_\_\_\_\_\_\_ group (*M* = ##, SD = ##).
+
+EXAMPLE: An independent samples *t*-test showed that there was not a significant difference (*t* = 2.36, *p* = .041) between the those who were primed for feelings for neuroticism (*M* = 12.01, SD = 3.49) compared to those who were primed for feelings of calm/neutrality (*M* = 9.46, SD = 3.20).
+
+## Step 8: Fitting the ANOVA model to the data.
+
+*You must check to see whether your interaction is significant by checking whether the THRID ROW with the two variables joined by a ":" has a significant p-value (i.e., \< .05). If it does, then your interaction is significant and you use interactionModel throughout. If not, you will only refer to the output for maineffectModel throughout.* The model code follows this format: model name \<- aov(lm(OUTCOME_VARIABLE \~ group \* PARTICIPANT_VARIABLE, data = anova.dat)). (+ or \* depending on the interaction)
+
+```{r}
+interactionModel <- aov(lm(OUTCOME_VARIABLE~group*PARTICIPANT_VARIABLE, data=anova.dat))
+summary(interactionModel)
+# Look for Df, F (value) statistic, and P-value (Pr) for group:PARTICIPANT_VARIABLE
+
+maineffectModel <- aov(lm(OUTCOME_VARIABLE~group+PARTICIPANT_VARIABLE, data=anova.dat))
+summary(maineffectModel)
+```
+
+**If the p-value is significant for the interaction effect, use interactionModel. OTHERWISE, use maineffectModel.**
+
+## Step 9: Computing effect size(s).
+
+**Only report effect sizes for significant results.**
+
+*IF YOU HAVE A SIGNIFICANT INTERACTION, the interactionModel object is what goes in the omega_squared function.* This code follows this format: omega_squared(interactionModel)
+
+*IF YOUR INTERACTION IS NOT! SIGNIFICANT, the maineffectModel object is what goes in the omega_squared function.* This code follows this format: omega_squared(maineffectModel)
+
+```{r}
+# only do this if your interaction IS sigificant
+effectsize::omega_squared(interactionModel)
+# only do this if the interaction is not statistically significant
+effectsize::omega_squared(maineffectModel)
+# In your APA report, ONLY report effect sizes for significant results
+# When using Omega Squared, .01 = small, .06 = medium, .14 = large 
+```
+
+## Step 10: Conducting post-hoc analyses.
+
+**Only do this if you had a significant interaction (THEN use interactionModel) or you had a significant main effect with no significant interaction (THEN use maineffectModel).** We will be using Tukey's HSD. The correct model object is what goes in the TukeyHSD function. Recall, you ONLY need to do post-hoc analyses if there is a significant interaction between your predictors OR your predictor variable has MORE THAN 2 LEVELS AND IS SIGNIFICANT. If there is no interaction or both your predictors are two levels then you do not need to do post-hoc analyses because an ANOVA with two levels is equivalent to a *t*-test.
+
+```{r}
+TukeyHSD(interactionModel)
+# if your interaciton wasn't significant AND your main effects were
+TukeyHSD(maineffectModel)
+# should be ran if you have significant differences in main effects 
+```
+
+## Step 11: Depicting results visually.
+
+You will create a graph regardless of whether your interaction was significant or not. Make sure to change the main title, *x*-axis label, and *y*-axis label. If you are feeling adventurous, you can also play with other color palettes. Remember to change "NEW LABEL" to the name of your categorical participant variable and "A" and "B" to the levels of that factor. If you have more than two levels, you must add them after "A" and "B"!
+
+```{r}
+p <-ggplot(anova.dat, aes(x=group, y=OUTCOME_VARIABLE, color=PARTICIPANT_VARIABLE)) + geom_boxplot() + labs(title="Graph Title",x="X-Axis", y = "Y-Axis Label") +  scale_x_discrete(breaks=c("1","2"), labels=c("Experiment", "Control")) + scale_color_discrete("New Label", labels = c("A", "B")) 
+p
+```
+
+## Step 12: Render the document.
+
+### End of script
